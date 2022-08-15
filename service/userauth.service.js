@@ -16,7 +16,7 @@ const userLoginData = (req, res) => {
       expiresIn: "1d",
     });
 
-    res.redirect(`${config.client_side_url}/v1/${token}/${email}`);
+    res.redirect(`${config.client_side_url}/v1/${token}`);
   }
   
 };
