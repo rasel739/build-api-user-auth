@@ -4,8 +4,7 @@ const swaggerUI = require("swagger-ui-express");
 const swaggerJsDoc = require("swagger-jsdoc");
 const swaggerDocument = require("./swagger-outputfile.json");
 const passport = require("passport");
-const singupUser = require("./routes/users.route");
-const loginUser = require("./routes/login.route");
+const userRouter = require("./routes/users.route");
 const resetPassword = require("./routes/passwordreset.route");
 const config = require("./config-env/config-env");
 const jwt = require("jsonwebtoken");
@@ -24,7 +23,7 @@ app.use(express.json());
 app.use(passport.initialize());
 app.use(
   session({
-    secret: config.cookie_secret,
+    secret: config.cookie_secret?config.cookie_secret:'null',
     resave: false,
     saveUninitialized: true,
     cookie: { secure: true },
@@ -33,7 +32,9 @@ app.use(
 app.set('view engine', 'ejs');
 
 
+
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerDocument));
+
 
 
 //google login
@@ -117,8 +118,8 @@ app.get('/auth/github/callback',
 
 
 
-app.use("/v1/user", singupUser);
-app.use("/v1/login-user", loginUser);
+app.use("/v1/user", userRouter);
+
 app.use("/v1/reset-password", resetPassword);
 //get server home page
 app.get("/", (req, res) => {

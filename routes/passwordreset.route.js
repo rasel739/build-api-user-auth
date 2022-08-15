@@ -6,6 +6,6 @@ const {
 const router = express.Router();
 
 router.post("/", PasswordReset);
-router.post("/:email/:token", passwordResetConfirmation);
+router.post("/:token", passwordResetConfirmation);
 
 module.exports = router;

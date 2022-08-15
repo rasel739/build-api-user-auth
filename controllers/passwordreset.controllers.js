@@ -5,11 +5,11 @@ const sendEmail = require("../utils/sendMail");
 const crypto = require("crypto");
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
-
+const config = require('../config-env/config-env');
 
 
 const PasswordReset = async (req, res) => {
-  // #swagger.tags = ['Reset password']
+  // #swagger.tags = ['reset password']
   /*    #swagger.parameters['obj'] = {
                 in: 'body',
                 description: 'Send reset password email.',
@@ -17,55 +17,58 @@ const PasswordReset = async (req, res) => {
         } */
  
   
-  let email = await User.findOne({where: { email: req.body.email }});
-  if (email == null) {
- 
-    return res.json({status: 'ok'});
-  }
-  
-  await Token.update({
+  const email = await User.findOne({where: { email: req.body.email }});
+  if (email) {
+
+
+    await Token.update(
+      {
       used: 1
     },
     {
       where: {
         email: req.body.email
       }
-  });
- 
-  //Create a random reset token
-  let fpSalt = crypto.randomBytes(64).toString('hex');
+      }
+    );
+ //Create a random reset token
+    let fpSalt = crypto.randomBytes(64).toString('hex');
+    
+    
  
   //token expires after one hour
   let expireDate = new Date(new Date().getTime() + (60 * 60 * 1000))
  
   //insert token data into DB
-  await Token.create({
-    email: req.body.email,
+    await Token.create({
+      email:req.body.email,
+     token: fpSalt,
     expiration: expireDate,
-    token: fpSalt,
     used: 0
   }).then((token) => {
+    const link = `${config.client_side_url}/resetPassword/${token.token}`;
+    if (config.nodeMailer.pass) {
+      sendEmail(token.email, "Your password reset email", link);
+    res.status(200).json({ message: 'password reset email sent' });
+    } else {
+      res.status(404).json({ message: 'node mailer engine not available' });
+    }
+   
+   
     
-    const link = `http://localhost:3000/resetPassword/${token.token}`;
-   sendEmail(token.email, "Your password has been reset", link);
-
   }).catch((err) => {
     
     console.log(err)
   })
- 
-   
- 
-  return res.json({status: 'ok'});
-  
-  
-     
-
     
+  } else {
+    res.status(404).json({status: 'Your email is not found. Please input your valid email.'});
+  }
+     
 };
 
 const passwordResetConfirmation = async (req, res) => {
-  // #swagger.tags = ['Reset password']
+  // #swagger.tags = ['reset password']
   /*    #swagger.parameters['obj'] = {
                 in: 'body',
                 description: 'Set new password.',
@@ -74,25 +77,24 @@ const passwordResetConfirmation = async (req, res) => {
   
   
  
-  let record = await Token.findOne({
+  const record = await Token.findOne({
     where: {
       token: req.params.token,
       used: 0
     }
-  });
- 
-  if (record == null) {
-    res.json({status: 'error', message: 'Token not found. Please try the reset password process again.'});
-  }
- 
-  let upd = await Token.update({
+  }).then((user) => {
+
+    let upd =  Token.update({
       used: 1
     },
     {
       where: {
         token: req.params.token
       }
-  });
+    }).then((user) => {
+    
+     
+  })
  
  bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
     User.update({
@@ -101,19 +103,20 @@ const passwordResetConfirmation = async (req, res) => {
   },
   {
     where: {
-      email: req.body.email
+      email:user.email,
     }
   }).then((pass)=>{
-   console.log('password reset')
-res.json({status: 'ok', message: 'Password reset. Please login with your new password.'});
+res.status(201).json({message: 'Password reset. Please login with your new password.'});
   }).catch((error)=>{
-    console.log('password not reset')
+    res.status(500).json({message:'Password reset not successfully.Please try again'})
   })
 });
 
+  }).catch((error) => {
+    
+res.status(404).json({message: 'Token not found. Please try the reset password process again.'});
+  })
  
- 
-  
   
 };
 

@@ -15,31 +15,13 @@ passport.use(
       clientSecret: config.google_signup.google_client_secret,
       callbackURL: `${config.server_side_url}/auth/google/callback`,
     },
-    function (accessToken, refreshToken, profile, cb) {
-      User.findOne({where:{ socialId: profile.id }}).then(function (user) {
-       
-        if (!user) {
-          User.create({
-            email: profile.emails[0].value,
-            socialId: profile.id,
-          }).then((users) => {
-            return cb(null, users);
-          }).catch((err) => {
-            return cb(null, err);
-          })
-        } else {
-          // if we find an user just return return user
-          return cb(null, user);
-        }
-      }).catch((error) => {
-        return cb(null, error);
-      })
+    (accessToken, refreshToken, profile, cb) => {
+      socialLogin(accessToken, refreshToken, profile, cb)
     }
   )
 );
 
 //facebook login
-
 passport.use(
   new FacebookStrategy(
     {
@@ -48,31 +30,13 @@ passport.use(
       callbackURL: `${config.server_side_url}/auth/facebook/callback`,
       profileFields: ["id", "emails", "name"],
     },
-    function (accessToken, refreshToken, profile, cb) {
-      User.findOne({where:{ socialId: profile.id }}).then(function (user) {
-       
-        if (!user) {
-          User.create({
-            email: profile.emails[0].value,
-            socialId: profile.id,
-          }).then((users) => {
-            return cb(null, users);
-          }).catch((err) => {
-            return cb(null, err);
-          })
-        } else {
-          // if we find an user just return return user
-          return cb(null, user);
-        }
-      }).catch((error) => {
-        return cb(null, error);
-      })
+    (accessToken, refreshToken, profile, cb) => {
+      socialLogin(accessToken, refreshToken, profile, cb)
     }
   )
 );
 
 //linkedin login
-
 passport.use(
   new LinkedInStrategy(
     {
@@ -81,31 +45,13 @@ passport.use(
       callbackURL: `${config.server_side_url}/auth/linkedin/callback`,
       scope: ["r_emailaddress", "r_liteprofile"],
     },
-    function (accessToken, refreshToken, profile, cb) {
+     (accessToken, refreshToken, profile, cb)=>{
       process.nextTick(() => {
-        User.findOne({where:{ socialId: profile.id }}).then(function (user) {
-       
-        if (!user) {
-          User.create({
-            email: profile.emails[0].value,
-            socialId: profile.id,
-          }).then((users) => {
-            return cb(null, users);
-          }).catch((err) => {
-            return cb(null, err);
-          })
-        } else {
-          // if we find an user just return return user
-          return cb(null, user);
-        }
-      }).catch((error) => {
-        return cb(null, error);
-      })
+        socialLogin(accessToken, refreshToken, profile, cb)
       });
     }
   )
 );
-
 
 passport.use(new GitHubStrategy({
     clientID:config.github_login.github_id,
@@ -113,13 +59,18 @@ passport.use(new GitHubStrategy({
   callbackURL: `${config.server_side_url}/auth/github/callback`,
     scope: ["user:email"],
   },
-  function(accessToken, refreshToken, profile, cb) {
-   User.findOne({where:{ socialId: profile.id }}).then(function (user) {
-       
+  (accessToken, refreshToken, profile, cb) => {
+      socialLogin(accessToken, refreshToken, profile, cb)
+    }
+));
+
+function socialLogin (accessToken, refreshToken, profile, cb) {
+      User.findOne({where:{ socialId: profile.id }}).then(function (user) {
         if (!user) {
           User.create({
             email: profile.emails[0].value,
             socialId: profile.id,
+             password:"null",
           }).then((users) => {
             return cb(null, users);
           }).catch((err) => {
@@ -132,10 +83,7 @@ passport.use(new GitHubStrategy({
       }).catch((error) => {
         return cb(null, error);
       })
-  }
-));
-
-
+    }
 
 
 passport.serializeUser((user, done) => {

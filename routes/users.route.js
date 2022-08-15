@@ -1,6 +1,6 @@
 
 const router = require("express").Router();
-const {createUser,updateUser,getUser} = require('../controllers/users.controllers');
+const {createUser,loginUser,updateUser,getUser,userDelete} = require('../controllers/users.controllers');
 const multer = require('multer');
 const path = require('path');
 const passport = require("passport");
@@ -19,10 +19,14 @@ const storage = multer.diskStorage({
   
 const upload = multer({ storage: storage })
 
-router.get('/',passport.authenticate("jwt", { session: false }),getUser)
-router.post("/", createUser);
 
-router.patch("/",upload.single("image"),passport.authenticate("jwt", { session: false }),updateUser)
+
+router.post("/user-signup", createUser);
+router.post("/user-login", loginUser);
+router.get('/', passport.authenticate("jwt", { session: false }), getUser);
+router.patch("/", upload.single("image"), passport.authenticate("jwt", { session: false }), updateUser);
+router.delete('/', passport.authenticate("jwt", { session: false }), userDelete);
+
   
 
 

@@ -4,8 +4,8 @@ module.exports = (sequelize, Sequelize) => {
     email: Sequelize.STRING,
     token: Sequelize.STRING,
     expiration: Sequelize.DATE,
-    used:Sequelize.INTEGER
-});
+    used: Sequelize.INTEGER
+  })
   return tokenSchema;
 };
 

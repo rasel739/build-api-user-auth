@@ -42,9 +42,13 @@ module.exports = {
       
       },
       password: {
-        type: Sequelize.STRING,
-        defaultValue:null,
-      },
+    type: Sequelize.STRING,
+        allowNull: false,
+    defaultValue:null,
+      validate: {
+        notEmpty: false,
+   },
+  },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
